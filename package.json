@@ -1,0 +1,30 @@
+{
+  "name": "Game and Watch",
+  "version": "1.0.0",
+  "description": "[Game and Watch](https://arthursw.github.io/game-and-watch/)",
+  "main": "main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arthursw/minuit.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arthursw/game-and-watch/issues"
+  },
+  "homepage": "https://github.com/arthursw/game-and-watch#readme",
+  "dependencies": {
+    "@tensorflow-models/posenet": "^0.2.3",
+    "@tensorflow/tfjs": "^0.13.5",
+    "ws": "^6.1.0"
+  },
+  "devDependencies": {
+    "midi-player-js": "^2.0.4"
+  }
+}
