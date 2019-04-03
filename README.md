@@ -1,6 +1,6 @@
 # Game and Watch
 
-[Game and Watch](https://arthursw.github.io/game-and-watch/)
+[Game and Watch](https://arthursw.github.io/game-n-watch/)
 
 A camera based [Game'n'Watch](https://en.wikipedia.org/wiki/Game_%26_Watch) to play in the street with a large LED screen or videoprojector.
 
