@@ -38,6 +38,8 @@
 
 // document.addEventListener("DOMContentLoaded", main)
 
+
+
 const craneMoveSpeed = 500
 let dropBoxMinSpeed = 5000
 let dropBoxSpeed = 5000
@@ -51,6 +53,14 @@ const craneOffsetY = 20
 let nInitialLives = 3
 let columnHeight = null
 
+let justCaughtBox = false
+let caughtBoxAnimationMinDuration = 250
+
+let difficulty = {
+  nSecondsPerLevel: 10,
+  speedIncreasePerLevel: 0.5
+}
+
 let playerOffsetY = 10
 
 let playerMinMoveDistance = 20
@@ -63,7 +73,8 @@ let playerCatchBoxLeftIndex = 0
 let playerCatchBoxRightIndex = 0
 
 let score = 0
-let lives = 3
+const maxLives = 3
+let lives = maxLives
 
 let boxRaster = null
 let boxDefinition = null
@@ -90,6 +101,12 @@ let updatePlayerLastTime = null
 
 let gameStarted = false
 
+let detectionMargins = {left: 50, top: 50, right: 50, bottom: 50}
+
+let level = 0
+let nBoxesCaught = 0
+let nBoxesCaughtForThisLevel = 0
+
 function preInitializeGameNWatch() {
 
   let canvas = document.getElementById('game-n-watch')
@@ -112,11 +129,25 @@ function preInitializeGameNWatch() {
 function initializeGameNWatch() {
 
 
-  startScreen = new paper.Raster('data/startScreen.png')
-  startScreen.onLoad = ()=> {
-    startScreen.position = paper.view.bounds.center
-  }
-  startScreen.smoothing = false
+  // startScreen = new paper.Raster('data/startScreen.png')
+  // startScreen.onLoad = ()=> {
+  //   startScreen.position = paper.view.bounds.center
+  // }
+  // startScreen.smoothing = false
+  startScreen = new paper.Group()
+  let startScreenBackground = new paper.Path.Rectangle(paper.view.bounds.expand(-150))
+  startScreenBackground.fillColor = new paper.Color(0.875, 0.875, 0.875, 0.65)
+  startScreenBackground.position = paper.view.bounds.center
+  startScreen.addChild(startScreenBackground)
+
+  let startScreenText = new paper.PointText()
+  startScreenText.content = 'CATCH A BOX\nTO BEGIN THE GAME'
+  startScreenText.fontFamily = 'DIGI'
+  startScreenText.fontWeight = 'lighter'
+  startScreenText.justification = 'center'
+  startScreenText.fontSize = 20
+  startScreenText.position = paper.view.bounds.center
+  startScreen.addChild(startScreenText)
 
   boxRaster = new paper.Raster('data/box.png')
   boxRaster.smoothing = false
@@ -142,13 +173,17 @@ function initializeGameNWatch() {
   heart0 = new paper.Raster('data/heart0.png')
   heart1 = new paper.Raster('data/heart1.png')
   heart0.smoothing = false
+  heart0.name = 'heart0'
   heart1.smoothing = false
+  heart1.name = 'heart1'
   heartGroup = new paper.Group()
-  heartGroup.addChild(heart0)
-  heartGroup.addChild(heart1)
   heartGroups = new paper.Group()
+  window.hg = heartGroups
   
-  heart0.onLoad = ()=> {
+  let loadHearts = ()=> {
+    heartGroup.addChild(heart0)
+    heartGroup.addChild(heart1)
+
     heartGroup.position.x = paper.view.bounds.center.x - heart0.bounds.width - heartMarginX
     heartGroup.position.y = paper.view.bounds.bottom - heart0.bounds.height / 2
     heartGroups.addChild(heartGroup)
@@ -158,6 +193,21 @@ function initializeGameNWatch() {
     heartGroups.lastChild.position.x += 2 * (heart0.bounds.width + heartMarginX)
 
     createScoreTexts()
+    
+    if(playerGroup) {
+      playerGroup.bringToFront()
+    }
+  }
+
+  heart0.onLoad = ()=> {
+    if(heart1.loaded) {
+      loadHearts()
+    }
+  }
+  heart1.onLoad = ()=> {
+    if(heart0.loaded) {
+      loadHearts()
+    }
   }
 
   playerImages.push(new paper.Raster('data/player0left.png'))
@@ -199,11 +249,13 @@ function initializeGameNWatch() {
     playerRectangle = new paper.Path.Rectangle(playerGroup.bounds)
     playerRectangle.strokeColor = 'green'
     playerRectangle.strokeWidth = 2
+    playerRectangle.visible = false
     playerGroup.position.x = paper.view.bounds.center.x
     playerGroup.position.y = paper.view.bounds.bottom - playerGroup.bounds.height / 2 - playerOffsetY
     playerRectangle.position.x = playerGroup.position.x
     playerRectangle.position.y = playerGroup.position.y
     columnHeight = paper.view.bounds.bottom - playerGroup.bounds.height
+    playerGroup.bringToFront()
   }
 
   // craneTween = new TWEEN.Tween(craneGroup.position)
@@ -264,9 +316,7 @@ function updateGameNWatch() {
 
 function dropBox() {
   let columnIndex = Math.floor(Math.random() * 10)
-  console.log("columnIndex: " + columnIndex)
   let nMargins = Math.floor(columnIndex / 2) * 2 + 1
-  console.log("nMargins: " + nMargins)
   let x = paper.view.bounds.left + (columnIndex + 0.5) * boxRaster.bounds.width + nMargins * columnMarginX
 
   craneBox.visible = true
@@ -320,12 +370,17 @@ function updateBoxes() {
       lives--
 
       if(lives >= 0) {
-
         heartGroups.children[lives].lastChild.visible = false
 
       } else {
 
         gameStarted = false
+        
+        level = 0
+        nBoxesCaught = 0
+        nBoxesCaughtForThisLevel = 0
+
+        lives = maxLives
 
         for(let box of boxGroup.children.slice()) {
           box.remove()
@@ -364,6 +419,14 @@ function catchBoxes() {
     if(box.position.y > columnHeight && playerRectangle.bounds.intersects(box.bounds)) {
 
       if(!gameStarted) {
+
+        level = 0
+        nBoxesCaught = 0
+        nBoxesCaughtForThisLevel = 0
+
+        for(let box of boxGroup.children.slice()) {
+          box.remove()
+        }
         stopBlinkStartScreen()
         gameStarted = true
       }
@@ -378,14 +441,26 @@ function catchBoxes() {
 
       let showLeft = playerDirection == 'left' || ( playerDirection == 'front' && Math.random() > 0.5)
       playerGroup.children[showLeft ? playerCatchBoxLeftIndex : playerCatchBoxRightIndex].visible = true
+      playerGroup.position.x = box.position.x
+      updatePlayerLastTime = Date.now()
+      justCaughtBox = true
 
       box.remove()
 
-      dropBoxSpeed -= Math.floor(score / 10) * 50
-    
-      if(dropBoxSpeed < dropBoxMaxSpeed) {
-        dropBoxSpeed = dropBoxMaxSpeed
+
+      nBoxesCaught++
+      nBoxesCaughtForThisLevel++
+
+      let nSecondsForThisLevel = nBoxesCaughtForThisLevel * dropBoxSpeed / 1000
+      
+      console.log('Level: ' + level + ', n boxes caught: ' + nBoxesCaught + ', n boxes in this level: ' + nBoxesCaughtForThisLevel + ', drop box speed: ' + (dropBoxSpeed / 1000))
+
+      if(nSecondsForThisLevel > difficulty.nSecondsPerLevel) {
+        level++
+        nBoxesCaughtForThisLevel = 0
+        dropBoxSpeed = Math.max(dropBoxMaxSpeed, dropBoxSpeed - difficulty.speedIncreasePerLevel * 1000)
       }
+
     }
   }
 }
@@ -397,10 +472,12 @@ let startScreenTimeout = null
 function startBlinkStartScreen() {
   stopBlinkStartScreen()
   startScreenTimeout = setTimeout(blinkStartScreen, startScreenSpeedOn)
+  startScreen.bringToFront()
   startScreen.visible = true
 }
 
 function blinkStartScreen() {
+  startScreen.bringToFront()
   startScreen.visible = !startScreen.visible
   startScreenTimeout = setTimeout(blinkStartScreen, startScreen.visible ? startScreenSpeedOn : startScreenSpeedOff)
 }
@@ -468,6 +545,8 @@ async function loadVideo() {
   return video;
 }
 
+let screenSize = null
+
 const guiState = {
   algorithm: 'multi-pose',
   input: {
@@ -491,8 +570,66 @@ const guiState = {
     showPoints: true,
     showBoundingBox: false,
   },
+  bodyPart: 'feet',
+  // fullscreen: false,
+  setFullscreen: ()=> {
+
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen(); 
+      }
+    }
+
+    // if(guiState.fullscreen) {
+    //   $('#gui').removeClass('fullscreen')
+    //   $('#game-n-watch').removeClass('fullscreen')
+    //   $('#game-n-watch-container').removeClass('fullscreen')
+    //   // $('#game-n-watch').css(screenSize)
+    // } else {
+    //   // screenSize = {width: $('#game-n-watch').css('width'), height: $('#game-n-watch').css('height') }
+    //   $('#gui').addClass('fullscreen')
+    //   $('#game-n-watch').addClass('fullscreen')
+    //   $('#game-n-watch-container').addClass('fullscreen')
+    //   // $('#game-n-watch').css({ 'width': '100%', 'height': '100%' })
+    // }
+    // guiState.fullscreen = !guiState.fullscreen
+  },
   net: null,
 };
+
+document.addEventListener("fullscreenchange", (event) => {
+  if (document.fullscreenElement) {
+    let canvas = document.getElementById('game-n-watch')
+
+    let windowRatio = window.innerWidth / window.innerHeight
+    let canvasRatio = canvas.clientWidth / canvas.clientHeight
+
+
+    $('#gui').addClass('fullscreen')
+    $('#game-n-watch').addClass('fullscreen')
+    $('#game-n-watch-container').addClass('fullscreen')
+
+    screenSize = {width: $('#game-n-watch').css('width'), height: $('#game-n-watch').css('height') }
+    
+    if(windowRatio > canvasRatio) {
+      $('#game-n-watch').css({ height: '100%', width: 'auto', position: 'absolute', left: '50%', transform: 'translateX(-50%)'})
+
+    } else {
+      $('#game-n-watch').css({ width: '100%', height: 'auto', position: 'absolute', top: '50%', transform: 'translateY(-50%)'})
+    }
+
+
+  } else {
+    $('#gui').removeClass('fullscreen')
+    $('#game-n-watch').removeClass('fullscreen')
+    $('#game-n-watch-container').removeClass('fullscreen')
+    screenSize.transform = 'none'
+    screenSize.position = 'initial'
+    $('#game-n-watch').css(screenSize)
+  }
+});
 
 /**
  * Sets up dat.gui controller on the top-right of the window
@@ -504,7 +641,10 @@ function setupGui(cameras, net) {
     guiState.camera = cameras[0].deviceId;
   }
 
-  const gui = new dat.GUI({width: 300});
+  const gui = new dat.GUI({width: 300, autoPlace: false});
+
+  var customContainer = document.getElementById('gui');
+  customContainer.appendChild(gui.domElement);
 
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
@@ -557,6 +697,21 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showPoints');
   output.add(guiState.output, 'showBoundingBox');
   output.open();
+
+  gui.add(guiState, 'bodyPart', ['nose', 'feet'])
+
+  let detectionMarginsFolder = gui.addFolder('Detection margins');
+  detectionMarginsFolder.add(detectionMargins, 'left', 0, 500, 1);
+  detectionMarginsFolder.add(detectionMargins, 'top', 0, 500, 1);
+  detectionMarginsFolder.add(detectionMargins, 'right', 0, 500, 1);
+  detectionMarginsFolder.add(detectionMargins, 'bottom', 0, 500, 1);
+  
+
+  let difficultyFolder = gui.addFolder('Difficulty');
+  difficultyFolder.add(difficulty, 'speedIncreasePerLevel', 0.25, 15.0, 0.5)
+  difficultyFolder.add(difficulty, 'nSecondsPerLevel', 1, 20, 1)
+
+  gui.add(guiState, 'setFullscreen').name('Fullscreen')
 
 
   architectureController.onChange(function(architecture) {
@@ -654,67 +809,112 @@ function detectPoseInRealTime(video, net) {
       ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
       ctx.restore();
     }
+    
+    let detectionWidth = videoWidth - detectionMargins.left - detectionMargins.right;
+    let detectionHeight = videoHeight - detectionMargins.top - detectionMargins.bottom;
+
+    ctx.rect(detectionMargins.left, detectionMargins.top, detectionWidth, detectionHeight);
+    ctx.strokeStyle = 'green';
+    ctx.stroke();
+
+    let bestPose = null;
+    let bestPoseScore = null;
+
+
+  //   const boundingBox = posenet.getBoundingBox(keypoints);
+
+  // ctx.rect(
+  //     boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
+  //     boundingBox.maxY - boundingBox.minY);
+    let getFeetPosition = (keypoints) => {
+      const boundingBox = posenet.getBoundingBox(keypoints);
+      return { x: (boundingBox.minX + boundingBox.maxX ) / 2, y: boundingBox.maxY }
+    }
 
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
+
+        let bodyPartPosition = guiState.bodyPart == 'nose' ? keypoints[0].position : getFeetPosition(keypoints)
+        let insideBox = bodyPartPosition.y > detectionMargins.top && bodyPartPosition.y < detectionMargins.top + detectionHeight
+
+        if(insideBox) {
+          if(bestPoseScore == null || score > bestPoseScore) {
+            bestPoseScore = score
+            bestPose = keypoints
+          }
+        }
+
         if (guiState.output.showPoints) {
-          drawKeypoints(keypoints, minPartConfidence, ctx);
+          drawKeypoints(keypoints, minPartConfidence, ctx, 1, insideBox ? 'aqua' : 'yellow');
         }
         if (guiState.output.showSkeleton) {
-          drawSkeleton(keypoints, minPartConfidence, ctx);
+          drawSkeleton(keypoints, minPartConfidence, ctx, 1, insideBox ? 'aqua' : 'yellow');
         }
         if (guiState.output.showBoundingBox) {
           drawBoundingBox(keypoints, ctx);
         }
-        let nose = keypoints[0]
-        
-        playerRectangle.position.x = paper.view.bounds.width * nose.position.x / videoWidth
-        
-        let now = Date.now()
-        if(now > updatePlayerLastTime + updatePlayerSpeed) {
-           
-          let moveDistance = playerRectangle.position.x - playerGroup.position.x
-          
-          for(let child of playerGroup.children) {
-            child.visible = false
-          }
-
-          playerImageIndex++
-
-          if(Math.abs(moveDistance) > playerMinMoveDistance) {
-            
-            if(playerImageIndex > 3) {
-              playerImageIndex = 0
-            }
-
-            if(moveDistance > 0) {
-              playerGroup.children[playerImageIndex + playerImageRightOffset].visible = true
-              playerDirection = 'right'
-            } else {
-              playerGroup.children[playerImageIndex + playerImageLeftOffset].visible = true
-              playerDirection = 'left'
-            }
-
-          } else {
-
-            if(playerImageIndex > 1) {
-              playerImageIndex = 0
-            }
-
-            playerGroup.children[playerImageIndex + playerImageFrontOffset].visible = true
-            playerDirection = 'front'
-          }
-
-          playerGroup.position.x = playerRectangle.position.x
-          updatePlayerLastTime = now
-        }
-
-        catchBoxes()
+               
       }
     });
+
+    // Move player
+    if(bestPose != null) {
+
+      let bodyPartPosition = guiState.bodyPart == 'nose' ? bestPose[0].position : getFeetPosition(bestPose)
+
+      // playerRectangle.position.x = paper.view.bounds.width * bodyPartPosition.x / videoWidth
+      playerRectangle.position.x = paper.view.bounds.width * Math.min(1.0, Math.max(0.0, ( bodyPartPosition.x - detectionMargins.left ) / detectionWidth ))
+      
+      let now = Date.now()
+      
+      let moveDistance = playerRectangle.position.x - playerGroup.position.x
+      
+      let updatePlayerSpeedNow = justCaughtBox ? caughtBoxAnimationMinDuration : updatePlayerSpeed
+
+      if(now > updatePlayerLastTime + updatePlayerSpeed || (Math.abs(moveDistance) > playerMinMoveDistance) && !justCaughtBox){
+        
+        justCaughtBox = false
+        
+        for(let child of playerGroup.children) {
+          child.visible = false
+        }
+
+        playerImageIndex++
+
+        if(Math.abs(moveDistance) > playerMinMoveDistance) {
+          
+          if(playerImageIndex > 3) {
+            playerImageIndex = 0
+          }
+
+          if(moveDistance > 0) {
+            playerGroup.children[playerImageIndex + playerImageRightOffset].visible = true
+            playerDirection = 'right'
+          } else {
+            playerGroup.children[playerImageIndex + playerImageLeftOffset].visible = true
+            playerDirection = 'left'
+          }
+
+        } else {
+
+          if(playerImageIndex > 1) {
+            playerImageIndex = 0
+          }
+
+          playerGroup.children[playerImageIndex + playerImageFrontOffset].visible = true
+          playerDirection = 'front'
+        }
+
+        playerGroup.position.x = playerRectangle.position.x
+        updatePlayerLastTime = now
+      }
+
+      catchBoxes()
+    }
+        
 
     // End monitoring code for frames per second
     stats.end();
@@ -760,3 +960,12 @@ navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
+
+
+document.addEventListener('keydown', function(e) {
+  if(e.keyCode == 27) {                             // Escape key
+    if(!guiState.fullScreen) {
+      // guiState.setFullscreen()
+    }
+  }
+}, false)

@@ -47,13 +47,13 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
-export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
+export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1, c = color) {
   const adjacentKeyPoints =
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
     drawSegment(
-        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
+        toTuple(keypoints[0].position), toTuple(keypoints[1].position), c,
         scale, ctx);
   });
 }
@@ -61,7 +61,7 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
 /**
  * Draw pose keypoints onto a canvas
  */
-export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
+export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1, c = color) {
   for (let i = 0; i < keypoints.length; i++) {
     const keypoint = keypoints[i];
 
@@ -70,7 +70,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
     }
 
     const {y, x} = keypoint.position;
-    drawPoint(ctx, y * scale, x * scale, 3, color);
+    drawPoint(ctx, y * scale, x * scale, 3, c);
   }
 }
 
@@ -79,14 +79,14 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
  * in an image, the bounding box will begin at the nose and extend to one of
  * ankles
  */
-export function drawBoundingBox(keypoints, ctx) {
+export function drawBoundingBox(keypoints, ctx, color = boundingBoxColor) {
   const boundingBox = posenet.getBoundingBox(keypoints);
 
   ctx.rect(
       boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
       boundingBox.maxY - boundingBox.minY);
 
-  ctx.strokeStyle = boundingBoxColor;
+  ctx.strokeStyle = color;
   ctx.stroke();
 }
 
