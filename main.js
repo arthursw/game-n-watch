@@ -584,19 +584,6 @@ const guiState = {
       }
     }
 
-    // if(guiState.fullscreen) {
-    //   $('#gui').removeClass('fullscreen')
-    //   $('#game-n-watch').removeClass('fullscreen')
-    //   $('#game-n-watch-container').removeClass('fullscreen')
-    //   // $('#game-n-watch').css(screenSize)
-    // } else {
-    //   // screenSize = {width: $('#game-n-watch').css('width'), height: $('#game-n-watch').css('height') }
-    //   $('#gui').addClass('fullscreen')
-    //   $('#game-n-watch').addClass('fullscreen')
-    //   $('#game-n-watch-container').addClass('fullscreen')
-    //   // $('#game-n-watch').css({ 'width': '100%', 'height': '100%' })
-    // }
-    // guiState.fullscreen = !guiState.fullscreen
   },
   mappingTools: false,
   net: null,
@@ -610,9 +597,7 @@ document.addEventListener("fullscreenchange", (event) => {
     let canvasRatio = canvas.clientWidth / canvas.clientHeight
 
 
-    $('#gui').addClass('fullscreen')
-    $('#game-n-watch').addClass('fullscreen')
-    $('#game-n-watch-container').addClass('fullscreen')
+    $('#main').addClass('fullscreen')
 
     $(stats.dom).hide()
 
@@ -623,16 +608,14 @@ document.addEventListener("fullscreenchange", (event) => {
     screenSize = {width: $('#game-n-watch').css('width'), height: $('#game-n-watch').css('height') }
     
     if(windowRatio > canvasRatio) {
-      $('#game-n-watch').css({ height: '100%', width: 'auto', position: 'absolute', left: '50%', transform: 'translateX(-50%)'})
+      $('#game-n-watch').css({ height: '100%', width: 'auto', position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)'})
 
     } else {
-      $('#game-n-watch').css({ width: '100%', height: 'auto', position: 'absolute', top: '50%', transform: 'translateY(-50%)'})
+      $('#game-n-watch').css({ width: '100%', height: 'auto', position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)'})
     }
 
   } else {
-    $('#gui').removeClass('fullscreen')
-    $('#game-n-watch').removeClass('fullscreen')
-    $('#game-n-watch-container').removeClass('fullscreen')
+    $('#main').removeClass('fullscreen')
     
     $(stats.dom).show()
 
@@ -974,8 +957,10 @@ export async function bindPage() {
   // Load the PoseNet model weights with architecture 0.75
   const net = await posenet.load(0.75);
 
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
+  // document.getElementById('loading').style.display = 'none';
+  // document.getElementById('main').style.display = 'block';
+
+  $('#main').removeClass('loading')
 
   let video;
 
