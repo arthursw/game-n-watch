@@ -114,14 +114,14 @@ Multiple Pose estimation can decode multiple poses in an image. It is more compl
 
 Pose confidence: the overall confidence in the estimation of a person's pose (i.e. a person detected in a frame).
 
-* **Min pose confidence**: the confidence threshold below which a person pose is ignored.
+* **Min pose confidence** - The confidence threshold below which a person pose is ignored.
 
-* **Min part confidence**: the confidence that a particular estimated keypoint position is accurate (i.e. the elbow's position)
+* **Min part confidence** - The confidence that a particular estimated keypoint position is accurate (i.e. the elbow's position)
 
 ##### Multi-Person Detection
 
-* **Max pose detections** - the maximum number of poses to detect.
-* **Min pose confidence** - the confidence threshold below which a person pose is ignored.
-* **Min part confidence** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+* **Max pose detections** - The maximum number of poses to detect.
+* **Min pose confidence** - The confidence threshold below which a person pose is ignored.
+* **Min part confidence** - Only return instance detections that have root part score greater or equal to this value.
 * **NMS radius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
 
