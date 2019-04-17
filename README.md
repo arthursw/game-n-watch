@@ -21,50 +21,9 @@ The PoseNet model is used to track each body part of the player.
  - The game stops when the player has no more lives.
  - If the score of the player is higher than the previous high score, the new high score is recorded.
 
-### Settings
+## Settings
 
-#### Detection
-
-The Game'n'Watch works fine with the default detection settings.
-
-See the [PoseNet model](https://github.com/tensorflow/tfjs-models/tree/master/posenet) for more details about those settings.
-
-##### Single-Person Pose Estimation
-
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
-
-##### Multi-Person Pose Estimation
-
-Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose (as on Game'n'Watch), this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
-
-##### Inputs
-
-* **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `0.75`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
-
-**By default,** PoseNet loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.**  A model with a **`0.50`** architecture is recommended for **mobile.**
-
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
-
-* **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-
-
-##### Single-Person Detection
-
-Pose confidence: the overall confidence in the estimation of a person's pose (i.e. a person detected in a frame).
-
-* **Min pose confidence**: the confidence threshold below which a person pose is ignored.
-
-* **Min part confidence**: the confidence that a particular estimated keypoint position is accurate (i.e. the elbow's position)
-
-##### Multi-Person Detection
-
-* **Max pose detections** - the maximum number of poses to detect.
-* **Min pose confidence** - the confidence threshold below which a person pose is ignored.
-* **Min part confidence** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
-* **NMS radius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
-
-
-#### Game'n'Watch
+### Game'n'Watch
 
 The PoseNet model gives a confidence score for each detected body. The game only considers the body with the highest confidence score in the detection area.
 
@@ -126,3 +85,43 @@ Since the idea is to have a projector aimed all crazy-like, the controls are all
 #### Fullscreen
 
 Use the *Fullscreen* button to set the fullscreen mode, use the `Escape` key to return to windowed mode.
+
+
+### Detection
+
+The Game'n'Watch works fine with the default detection settings.
+
+See the [PoseNet model](https://github.com/tensorflow/tfjs-models/tree/master/posenet) for more details about those settings.
+
+##### Single-Person Pose Estimation
+
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
+
+##### Multi-Person Pose Estimation
+
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose (as on Game'n'Watch), this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+
+##### Inputs
+
+* **MobileNet Architecture** - Architecture: there are a few PoseNet models varying in size and accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the fastest, but least accurate.
+
+* **Output stride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
+
+* **Image scale factor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
+
+
+##### Single-Person Detection
+
+Pose confidence: the overall confidence in the estimation of a person's pose (i.e. a person detected in a frame).
+
+* **Min pose confidence**: the confidence threshold below which a person pose is ignored.
+
+* **Min part confidence**: the confidence that a particular estimated keypoint position is accurate (i.e. the elbow's position)
+
+##### Multi-Person Detection
+
+* **Max pose detections** - the maximum number of poses to detect.
+* **Min pose confidence** - the confidence threshold below which a person pose is ignored.
+* **Min part confidence** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+* **NMS radius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+

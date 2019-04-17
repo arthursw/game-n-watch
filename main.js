@@ -643,6 +643,43 @@ function setupGui(cameras, net) {
   var customContainer = document.getElementById('gui');
   customContainer.appendChild(gui.domElement);
 
+  let gameFolder = gui.addFolder("Game'n'Watch")
+
+  let gameAreaMarginsFolder = gameFolder.addFolder('Game area margins');
+
+  let updateDetectionMargins = ()=> {
+    localStorage.setItem('detection-margins', JSON.stringify(gameAreaMargins))
+  }
+
+  gameAreaMarginsFolder.add(gameAreaMargins, 'left', 0, 500, 1).onChange(updateDetectionMargins).name('Left');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'top', 0, 500, 1).onChange(updateDetectionMargins).name('Top');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'right', 0, 500, 1).onChange(updateDetectionMargins).name('Right');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'bottom', 0, 500, 1).onChange(updateDetectionMargins).name('Bottom');
+  gameAreaMarginsFolder.open();
+
+  gameFolder.add(guiState, 'bodyPart', ['nose', 'feet']).name('Body part').onChange((value)=> localStorage.setItem('bodyPart', value) )
+
+  let difficultyFolder = gameFolder.addFolder('Difficulty');
+  let updateDifficulty = ()=> {
+    localStorage.setItem('difficulty', JSON.stringify(difficulty))
+  }
+  difficultyFolder.add(difficulty, 'nSecondsPerLevel', 1, 20, 1).name('Level duration').onChange(updateDifficulty)
+  difficultyFolder.add(difficulty, 'speedIncreasePerLevel', 0.25, 15.0, 0.5).name('Level speed increase').onChange(updateDifficulty)
+  
+
+  gameFolder.add(guiState, 'mappingTools').name('Video mapping tools').onChange((value)=> {
+    if(value) {
+      Maptastic("game-n-watch");
+    } else {
+      $('#game-n-watch').css({ transform: 'none', position: 'initial'})
+    }
+  })
+
+  gameFolder.add(guiState, 'setFullscreen').name('Fullscreen')
+
+  gameFolder.open();
+
+
   let detectionFolder = gui.addFolder("Detection")
 
   // The single-pose algorithm is faster and simpler but requires only one
@@ -698,43 +735,7 @@ function setupGui(cameras, net) {
   // output.open();
 
   // detectionFolder.open();
-
-  let gameFolder = gui.addFolder("Game'n'Watch")
-
-  let gameAreaMarginsFolder = gameFolder.addFolder('Game area margins');
-
-  let updateDetectionMargins = ()=> {
-    localStorage.setItem('detection-margins', JSON.stringify(gameAreaMargins))
-  }
-
-  gameAreaMarginsFolder.add(gameAreaMargins, 'left', 0, 500, 1).onChange(updateDetectionMargins).name('Left');
-  gameAreaMarginsFolder.add(gameAreaMargins, 'top', 0, 500, 1).onChange(updateDetectionMargins).name('Top');
-  gameAreaMarginsFolder.add(gameAreaMargins, 'right', 0, 500, 1).onChange(updateDetectionMargins).name('Right');
-  gameAreaMarginsFolder.add(gameAreaMargins, 'bottom', 0, 500, 1).onChange(updateDetectionMargins).name('Bottom');
-  gameAreaMarginsFolder.open();
-
-  gameFolder.add(guiState, 'bodyPart', ['nose', 'feet']).name('Body part').onChange((value)=> localStorage.setItem('bodyPart', value) )
-
-  let difficultyFolder = gameFolder.addFolder('Difficulty');
-  let updateDifficulty = ()=> {
-    localStorage.setItem('difficulty', JSON.stringify(difficulty))
-  }
-  difficultyFolder.add(difficulty, 'nSecondsPerLevel', 1, 20, 1).name('Level duration').onChange(updateDifficulty)
-  difficultyFolder.add(difficulty, 'speedIncreasePerLevel', 0.25, 15.0, 0.5).name('Level speed increase').onChange(updateDifficulty)
   
-
-  gameFolder.add(guiState, 'mappingTools').name('Video mapping tools').onChange((value)=> {
-    if(value) {
-      Maptastic("game-n-watch");
-    } else {
-      $('#game-n-watch').css({ transform: 'none', position: 'initial'})
-    }
-  })
-
-  gameFolder.add(guiState, 'setFullscreen').name('Fullscreen')
-
-  gameFolder.open();
-
   architectureController.onChange(function(architecture) {
     guiState.changeToArchitecture = architecture;
   });
