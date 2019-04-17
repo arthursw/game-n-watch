@@ -56,7 +56,8 @@ let columnHeight = null
 let justCaughtBox = false
 let caughtBoxAnimationMinDuration = 250
 
-let difficulty = {
+let difficultyJSON = localStorage.getItem('difficulty')
+let difficulty = difficultyJSON ? JSON.parse(difficultyJSON) : {
   nSecondsPerLevel: 10,
   speedIncreasePerLevel: 0.5
 }
@@ -101,7 +102,8 @@ let updatePlayerLastTime = null
 
 let gameStarted = false
 
-let detectionMargins = {left: 50, top: 50, right: 50, bottom: 50}
+let gameAreaMarginsJSON = localStorage.getItem('detection-margins')
+let gameAreaMargins =  gameAreaMarginsJSON ? JSON.parse(gameAreaMarginsJSON) : {left: 50, top: 50, right: 50, bottom: 50}
 
 let level = 0
 let nBoxesCaught = 0
@@ -570,7 +572,7 @@ const guiState = {
     showPoints: true,
     showBoundingBox: false,
   },
-  bodyPart: 'feet',
+  bodyPart: localStorage.getItem('bodyPart') || 'feet',
   // fullscreen: false,
   setFullscreen: ()=> {
 
@@ -596,6 +598,7 @@ const guiState = {
     // }
     // guiState.fullscreen = !guiState.fullscreen
   },
+  mappingTools: false,
   net: null,
 };
 
@@ -611,6 +614,12 @@ document.addEventListener("fullscreenchange", (event) => {
     $('#game-n-watch').addClass('fullscreen')
     $('#game-n-watch-container').addClass('fullscreen')
 
+    $(stats.dom).hide()
+
+    if(guiState.mappingTools) {
+      return
+    }
+
     screenSize = {width: $('#game-n-watch').css('width'), height: $('#game-n-watch').css('height') }
     
     if(windowRatio > canvasRatio) {
@@ -620,11 +629,16 @@ document.addEventListener("fullscreenchange", (event) => {
       $('#game-n-watch').css({ width: '100%', height: 'auto', position: 'absolute', top: '50%', transform: 'translateY(-50%)'})
     }
 
-
   } else {
     $('#gui').removeClass('fullscreen')
     $('#game-n-watch').removeClass('fullscreen')
     $('#game-n-watch-container').removeClass('fullscreen')
+    
+    $(stats.dom).show()
+
+    if(!screenSize || guiState.mappingTools) {
+      return
+    }
     screenSize.transform = 'none'
     screenSize.position = 'initial'
     $('#game-n-watch').css(screenSize)
@@ -641,78 +655,102 @@ function setupGui(cameras, net) {
     guiState.camera = cameras[0].deviceId;
   }
 
-  const gui = new dat.GUI({width: 300, autoPlace: false});
+  const gui = new dat.GUI({width: 350, autoPlace: false});
 
   var customContainer = document.getElementById('gui');
   customContainer.appendChild(gui.domElement);
+
+  let detectionFolder = gui.addFolder("Detection")
 
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
   const algorithmController =
-      gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
+      detectionFolder.add(guiState, 'algorithm', ['single-pose', 'multi-pose']).name('Algorithm');
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
-  let input = gui.addFolder('Input');
+  let input = detectionFolder.addFolder('Input');
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
   const architectureController = input.add(
       guiState.input, 'mobileNetArchitecture',
-      ['1.01', '1.00', '0.75', '0.50']);
+      ['1.01', '1.00', '0.75', '0.50']).name('MobileNet architecture');
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
-  input.add(guiState.input, 'outputStride', [8, 16, 32]);
+  input.add(guiState.input, 'outputStride', [8, 16, 32]).name('Output Stride');
   // Image scale factor: What to scale the image by before feeding it through
   // the network.
-  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
-  input.open();
+  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0).name('Image scale factor');
+  // input.open();
 
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
   // Min part confidence: the confidence that a particular estimated keypoint
   // position is accurate (i.e. the elbow's position)
-  let single = gui.addFolder('Single Pose Detection');
-  single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
+  let single = detectionFolder.addFolder('Single Pose Detection');
+  single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0).name('Min pose confidence');
+  single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0).name('Min part confidence');
 
-  let multi = gui.addFolder('Multi Pose Detection');
+  let multi = detectionFolder.addFolder('Multi Pose Detection');
   multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
       .min(1)
       .max(20)
-      .step(1);
-  multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
+      .step(1).name('Max pose detection');
+  multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0).name('Min pose confidence');
+  multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0).name('Min part confidence');
   // nms Radius: controls the minimum distance between poses that are returned
   // defaults to 20, which is probably fine for most use cases
-  multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
-  multi.open();
+  multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0).name('NMS radius');
+  // multi.open();
 
-  let output = gui.addFolder('Output');
-  output.add(guiState.output, 'showVideo');
-  output.add(guiState.output, 'showSkeleton');
-  output.add(guiState.output, 'showPoints');
-  output.add(guiState.output, 'showBoundingBox');
-  output.open();
+  let output = detectionFolder.addFolder('Output');
+  output.add(guiState.output, 'showVideo').name('Show video');
+  output.add(guiState.output, 'showSkeleton').name('Show skeleton');
+  output.add(guiState.output, 'showPoints').name('Show points');
+  output.add(guiState.output, 'showBoundingBox').name('Show bounding box');
+  // output.open();
 
-  gui.add(guiState, 'bodyPart', ['nose', 'feet'])
+  // detectionFolder.open();
 
-  let detectionMarginsFolder = gui.addFolder('Detection margins');
-  detectionMarginsFolder.add(detectionMargins, 'left', 0, 500, 1);
-  detectionMarginsFolder.add(detectionMargins, 'top', 0, 500, 1);
-  detectionMarginsFolder.add(detectionMargins, 'right', 0, 500, 1);
-  detectionMarginsFolder.add(detectionMargins, 'bottom', 0, 500, 1);
+  let gameFolder = gui.addFolder("Game'n'Watch")
+
+  let gameAreaMarginsFolder = gameFolder.addFolder('Game area margins');
+
+  let updateDetectionMargins = ()=> {
+    localStorage.setItem('detection-margins', JSON.stringify(gameAreaMargins))
+  }
+
+  gameAreaMarginsFolder.add(gameAreaMargins, 'left', 0, 500, 1).onChange(updateDetectionMargins).name('Left');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'top', 0, 500, 1).onChange(updateDetectionMargins).name('Top');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'right', 0, 500, 1).onChange(updateDetectionMargins).name('Right');
+  gameAreaMarginsFolder.add(gameAreaMargins, 'bottom', 0, 500, 1).onChange(updateDetectionMargins).name('Bottom');
+  gameAreaMarginsFolder.open();
+
+  gameFolder.add(guiState, 'bodyPart', ['nose', 'feet']).name('Body part').onChange((value)=> localStorage.setItem('bodyPart', value) )
+
+  let difficultyFolder = gameFolder.addFolder('Difficulty');
+  let updateDifficulty = ()=> {
+    localStorage.setItem('difficulty', JSON.stringify(difficulty))
+  }
+  difficultyFolder.add(difficulty, 'nSecondsPerLevel', 1, 20, 1).name('Level duration').onChange(updateDifficulty)
+  difficultyFolder.add(difficulty, 'speedIncreasePerLevel', 0.25, 15.0, 0.5).name('Level speed increase').onChange(updateDifficulty)
   
 
-  let difficultyFolder = gui.addFolder('Difficulty');
-  difficultyFolder.add(difficulty, 'speedIncreasePerLevel', 0.25, 15.0, 0.5)
-  difficultyFolder.add(difficulty, 'nSecondsPerLevel', 1, 20, 1)
+  gameFolder.add(guiState, 'mappingTools').name('Video mapping tools').onChange((value)=> {
+    if(value) {
+      Maptastic("game-n-watch");
+    } else {
+      $('#game-n-watch').css({ transform: 'none', position: 'initial'})
+    }
+  })
 
-  gui.add(guiState, 'setFullscreen').name('Fullscreen')
+  gameFolder.add(guiState, 'setFullscreen').name('Fullscreen')
 
+  gameFolder.open();
 
   architectureController.onChange(function(architecture) {
     guiState.changeToArchitecture = architecture;
@@ -810,10 +848,10 @@ function detectPoseInRealTime(video, net) {
       ctx.restore();
     }
     
-    let detectionWidth = videoWidth - detectionMargins.left - detectionMargins.right;
-    let detectionHeight = videoHeight - detectionMargins.top - detectionMargins.bottom;
+    let detectionWidth = videoWidth - gameAreaMargins.left - gameAreaMargins.right;
+    let detectionHeight = videoHeight - gameAreaMargins.top - gameAreaMargins.bottom;
 
-    ctx.rect(detectionMargins.left, detectionMargins.top, detectionWidth, detectionHeight);
+    ctx.rect(gameAreaMargins.left, gameAreaMargins.top, detectionWidth, detectionHeight);
     ctx.strokeStyle = 'green';
     ctx.stroke();
 
@@ -838,7 +876,7 @@ function detectPoseInRealTime(video, net) {
       if (score >= minPoseConfidence) {
 
         let bodyPartPosition = guiState.bodyPart == 'nose' ? keypoints[0].position : getFeetPosition(keypoints)
-        let insideBox = bodyPartPosition.y > detectionMargins.top && bodyPartPosition.y < detectionMargins.top + detectionHeight
+        let insideBox = bodyPartPosition.y > gameAreaMargins.top && bodyPartPosition.y < gameAreaMargins.top + detectionHeight
 
         if(insideBox) {
           if(bestPoseScore == null || score > bestPoseScore) {
@@ -866,7 +904,7 @@ function detectPoseInRealTime(video, net) {
       let bodyPartPosition = guiState.bodyPart == 'nose' ? bestPose[0].position : getFeetPosition(bestPose)
 
       // playerRectangle.position.x = paper.view.bounds.width * bodyPartPosition.x / videoWidth
-      playerRectangle.position.x = paper.view.bounds.width * Math.min(1.0, Math.max(0.0, ( bodyPartPosition.x - detectionMargins.left ) / detectionWidth ))
+      playerRectangle.position.x = paper.view.bounds.width * Math.min(1.0, Math.max(0.0, ( bodyPartPosition.x - gameAreaMargins.left ) / detectionWidth ))
       
       let now = Date.now()
       
@@ -960,6 +998,8 @@ navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
+
+
 
 
 document.addEventListener('keydown', function(e) {
