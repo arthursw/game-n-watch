@@ -4,7 +4,6 @@
 
 A camera based [Game'n'Watch](https://en.wikipedia.org/wiki/Game_%26_Watch) to play in the street with a large LED screen or videoprojector.
 
-![Photo 1](data/photos/photo1.jpg)
 ![Photo 2](data/photos/photo2.jpg)
 ![Photo 3](data/photos/photo3.jpg)
 ![Photo 4](data/photos/photo4.jpg)
