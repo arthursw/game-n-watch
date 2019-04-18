@@ -4,7 +4,15 @@
 
 A camera based [Game'n'Watch](https://en.wikipedia.org/wiki/Game_%26_Watch) to play in the street with a large LED screen or videoprojector.
 
+![Photo 1](data/photos/photo1.jpg)
+![Photo 2](data/photos/photo2.jpg)
+![Photo 3](data/photos/photo3.jpg)
+![Photo 4](data/photos/photo4.jpg)
+
+![Video](https://www.facebook.com/collectiflasophiste/videos/10154094716591712/)
+
 [Installation by La Sophiste](http://www.lasophiste.com/portfolio/gamenwatch/) and [3Hit Combo](http://www.3hitcombo.fr/).
+
 
 Re-developed with [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) from Google.
 
