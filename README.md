@@ -1,6 +1,6 @@
 # Game and Watch
 
-[Game and Watch](https://arthursw.github.io/game-n-watch/)
+:video_game: [Play Game and Watch online here!](https://arthursw.github.io/game-n-watch/) :game_die:
 
 A camera based [Game'n'Watch](https://en.wikipedia.org/wiki/Game_%26_Watch) to play in the street with a large LED screen or videoprojector.
 
