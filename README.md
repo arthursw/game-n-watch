@@ -12,6 +12,12 @@ A camera based [Game'n'Watch](https://en.wikipedia.org/wiki/Game_%26_Watch) to p
 
 [Installation by La Sophiste](http://www.lasophiste.com/portfolio/gamenwatch/) and [3Hit Combo](http://www.3hitcombo.fr/).
 
+Game & Watch revisits old portable video games from the 80s.
+
+Instead of using buttons, the player controls the game by moving in the game area drawn on the floor. Players must literally run to catch the boxes which fall increasingly quickly.
+
+Just like the original portable game brought video games in novel spaces of daily life, Game & Watch invests public space and large playground in a fun, athletic and minimalistic manner. The quirky and convivial spirit of the game contrast with the universe of hightech home consoles.
+
 
 Re-developed with [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) from Google.
 
