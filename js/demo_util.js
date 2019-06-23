@@ -25,7 +25,7 @@ function toTuple({y, x}) {
   return [y, x];
 }
 
-export function drawPoint(ctx, y, x, r, color) {
+ function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
   ctx.fillStyle = color;
@@ -35,7 +35,7 @@ export function drawPoint(ctx, y, x, r, color) {
 /**
  * Draws a line on a canvas, i.e. a joint
  */
-export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
+ function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.beginPath();
   ctx.moveTo(ax * scale, ay * scale);
   ctx.lineTo(bx * scale, by * scale);
@@ -47,7 +47,7 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
-export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1, c = color) {
+ function drawSkeleton(keypoints, minConfidence, ctx, scale = 1, c = color) {
   const adjacentKeyPoints =
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
@@ -61,7 +61,7 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1, c = color
 /**
  * Draw pose keypoints onto a canvas
  */
-export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1, c = color) {
+ function drawKeypoints(keypoints, minConfidence, ctx, scale = 1, c = color) {
   for (let i = 0; i < keypoints.length; i++) {
     const keypoint = keypoints[i];
 
@@ -79,7 +79,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1, c = colo
  * in an image, the bounding box will begin at the nose and extend to one of
  * ankles
  */
-export function drawBoundingBox(keypoints, ctx, color = boundingBoxColor) {
+ function drawBoundingBox(keypoints, ctx, color = boundingBoxColor) {
   const boundingBox = posenet.getBoundingBox(keypoints);
 
   ctx.rect(
@@ -93,7 +93,7 @@ export function drawBoundingBox(keypoints, ctx, color = boundingBoxColor) {
 /**
  * Converts an arary of pixel data into an ImageData object
  */
-export async function renderToCanvas(a, ctx) {
+ async function renderToCanvas(a, ctx) {
   const [height, width] = a.shape;
   const imageData = new ImageData(width, height);
 
@@ -115,7 +115,7 @@ export async function renderToCanvas(a, ctx) {
 /**
  * Draw an image on a canvas
  */
-export function renderImageToCanvas(image, size, canvas) {
+ function renderImageToCanvas(image, size, canvas) {
   canvas.width = size[0];
   canvas.height = size[1];
   const ctx = canvas.getContext('2d');
@@ -128,7 +128,7 @@ export function renderImageToCanvas(image, size, canvas) {
  * Read our blog post for a description of PoseNet's heatmap outputs
  * https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5
  */
-export function drawHeatMapValues(heatMapValues, outputStride, canvas) {
+ function drawHeatMapValues(heatMapValues, outputStride, canvas) {
   const ctx = canvas.getContext('2d');
   const radius = 5;
   const scaledValues = heatMapValues.mul(tf.scalar(outputStride, 'int32'));
@@ -161,7 +161,7 @@ function drawPoints(ctx, points, radius, color) {
  * Read our blog post for a description of PoseNet's offset vector outputs
  * https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5
  */
-export function drawOffsetVectors(
+ function drawOffsetVectors(
     heatMapValues, offsets, outputStride, scale = 1, ctx) {
   const offsetPoints =
       posenet.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
