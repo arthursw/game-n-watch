@@ -954,8 +954,8 @@ function detectPoseInRealTime(video, net) {
   preInitializeGameNWatch()
 
   // Load the PoseNet model weights with architecture 0.75
-  const net = await posenet.load(0.75);
-  // const net = await loadModel(0.75);
+  // const net = await posenet.load(0.75);
+  const net = await loadModel(0.75);
 
   // document.getElementById('loading').style.display = 'none';
   // document.getElementById('main').style.display = 'block';
