@@ -95,6 +95,9 @@
 			<canvas id="game-n-watch" width="320" height="224"></canvas>
 		</div>
 		
+		<!-- Insert this line above script imports  -->
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
 		<script src="libs/jquery.min.js"></script>
 		<script src="libs/paper-full.js"></script>
 		<!-- <script src="libs/Tween.js"></script> -->
@@ -118,10 +121,19 @@
 		
 		<!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.1.0"></script> -->
   		<!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@1.0.3"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script> -->
+  		<!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script> -->
 		
-		<script src="libs/tensorflow.js"></script>
-  		<script src="libs/tensorflow-models-posenet.js"></script>
+		<script src="libs/tfjs@1.1.0.js"></script>
+  		<script src="libs/posenet@1.0.3.js"></script>
+
+		<!-- <script src="libs/tensorflow.js"></script> -->
+  		<!-- <script src="libs/tensorflow-models-posenet.js"></script> -->
   		<script src="js/demo_util.js"></script>
+
+		<!-- Insert this line after script imports -->
+		<script>if (window.module) module = window.module;</script>
+
 		<script src="client-main.js"></script>
 
 	</body>

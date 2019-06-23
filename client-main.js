@@ -1,42 +1,40 @@
-// import * as posenet from '@tensorflow-models/posenet';
 
-// let parameters = {
-// }
+const BASE_URL = '/models/';
 
+const checkpoints = {
+  1.01: {
+    url: BASE_URL + 'mobilenet_v1_101/',
+    architecture: posenet.mobileNetArchitectures[100]
+  },
+  1.0: {
+    url: BASE_URL + 'mobilenet_v1_100/',
+    architecture: posenet.mobileNetArchitectures[100]
+  },
+  0.75: {
+    url: BASE_URL + 'mobilenet_v1_075/',
+    architecture: posenet.mobileNetArchitectures[75]
+  },
+  0.5: {
+    url: BASE_URL + 'mobilenet_v1_050/',
+    architecture: posenet.mobileNetArchitectures[50]
+  }
+};
 
-// function initialize() {
+async function loadModel(multiplier){
+  const mobileNetModel = await loadMobileNetModel(multiplier);
 
+  return new posenet.PoseNet(mobileNetModel);
+}
 
-// }
+async function loadMobileNetModel(multiplier) {
+  const checkpoint = checkpoints[multiplier];
 
-// function onWindowResize() {
+  const checkpointLoader = new posenet.CheckpointLoader(checkpoint.url);
 
-// }
+  const variables = await checkpointLoader.getAllVariables();
 
-// function animate() {
-    
-//     requestAnimationFrame( animate )
-
-// }
-
-
-// function render() {
-
-// }
-
-// let main = ()=> {
-
-
-//     initialize()
-
-
-//     window.addEventListener("resize", onWindowResize, false )
-
-    
-//     animate()
-// }
-
-// document.addEventListener("DOMContentLoaded", main)
+  return new posenet.MobileNet(variables, checkpoint.architecture);
+}
 
 
 
@@ -957,6 +955,7 @@ function detectPoseInRealTime(video, net) {
 
   // Load the PoseNet model weights with architecture 0.75
   const net = await posenet.load(0.75);
+  // const net = await loadModel(0.75);
 
   // document.getElementById('loading').style.display = 'none';
   // document.getElementById('main').style.display = 'block';
