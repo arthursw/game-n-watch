@@ -1,5 +1,5 @@
 
-const BASE_URL = '/models/';
+const BASE_URL = './models/';
 
 const checkpoints = {
   1.01: {
